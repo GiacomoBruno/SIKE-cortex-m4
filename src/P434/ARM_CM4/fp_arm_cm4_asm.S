@@ -378,11 +378,14 @@ fneg434_asm:
 .thumb_func
 .global mul434_asm
 mul434_asm:
-	push {r4-r12,lr}
+	push {r3-r12,lr}
 	
 	vldm r0, {s0-s13}
 
-	//move to core registers for calculations
+//A divided in: A0 A1 A2 A3 A4 A5 A6
+//AH+AL divided in: a0 a1 a2 a3
+
+// s0, s1 <= a0 where a0 = A0 + A4
 	vmov r4, s0
 	vmov r5, s1
 	vmov r6, s8
@@ -390,11 +393,11 @@ mul434_asm:
 
 	adds r4, r4, r6
 	adcs r5, r5, r7
-	//save results in fpu registers
-	vmov s14, r4
-	vmov s15, r5
 
-	//move to core registers for calculations
+	vmov s0, r4
+	vmov s1, r5
+
+// s2, s3 <= a1 where a1 = A1 + A5
 	vmov r4, s2
 	vmov r5, s3
 	vmov r6, s10
@@ -402,22 +405,11 @@ mul434_asm:
 
 	adcs r4, r4, r6
 	adcs r5, r5, r7
-	//save results in fpu registers
-	vmov s16, r4
-	vmov s17, r5
 
-	//move to core registers for calculations
-	vmov r4, s2
-	vmov r5, s3
-	vmov r6, s10
-	vmov r7, s11
+	vmov s2, r4
+	vmov s3, r5
 
-	adcs r4, r4, r6
-	adcs r5, r5, r7
-	//save results in fpu registers
-	vmov s16, r4
-	vmov s17, r5
-
+// s4, s5 <= a2 where a2 = A2 + A6
 	vmov r4, s4
 	vmov r5, s5
 	vmov r6, s12
@@ -425,22 +417,84 @@ mul434_asm:
 
 	adcs r4, r4, r6
 	adcs r5, r5, r7
-	//save results in fpu registers
-	vmov s18 r4
-	vmov s19 r5
 
+	vmov s4, r4
+	vmov s5, r5
+
+// s6, s7 <= a3 where a3 = A3 + 0
 	vmov r4, s6
-	mov r5, #0x0
-	adcs r4, r4, r5
-	adcs r5, r5, r5
+	vmov r5, s7
+	mov r9, #0x0
 
-	vmov s20, r4
-	vmov s21, r5
+	adcs r4, r4, r9
+	adcs r5, r5, r9
 
+	vmov s6, r4
+	vmov s7, r5
+//
 
+// SAVE MASK IN r9
+	adc 	r9, r9, r9
+	vldm 	r1, {s8-s15}
+//
+
+//B divided in: B0 B1 B2 B3 B4 B5 B6
+//BH+BL divided in: b0 b1 b2 b3
+
+// s8,  s9 <= b0 where b0 = B0 + B4
+	vmov 	r4, s8
+	vmov 	r5, s9
+	vmov 	r6, s16
+	vmov 	r7, s17
+
+	adds 	r4, r4, r6
+	adcs 	r5, r5, r7
+
+	vmov 	s8, r4
+	vmov 	s9, r5
+
+// s10, s11 <= b1 where b1 = B1 + B5
+	vmov 	r4, s10
+	vmov 	r5, s11
+	vmov 	r6, s18
+	vmov 	r7, s19
+
+	adcs 	r4, r4, r6
+	adcs 	r5, r5, r7
+
+	vmov 	s10, r4
+	vmov 	s11, r5
+
+// s12, s13 <= b2 where b2 = B2 + B6
+	vmov 	r4, s12
+	vmov 	r5, s13
+	vmov 	r6, s20
+	vmov 	r7, s21
+
+	adcs 	r4, r4, r6
+	adcs 	r5, r5, r7
+
+	vmov 	s12, r4
+	vmov 	s13, r5
+
+// s14, s15 <= b3 where b3 = B3 + 0
+	vmov 	r4, s14
+	vmov 	r5, s15
+	mov 	r3, #0x0
+
+	adcs 	r4, r4, r3
+	adcs 	r5, r5, r3
+
+	vmov 	s14, r4
+	vmov 	s15, r5
+
+// SAVE MASK IN r8 then get -MASK
+	adc 	r8, r3, r3
+
+	sub 	r8, r3, r8
+	sub 	r9, r3, r9
+//
 
 	
-	
-	
-	pop	 {r4-r12,lr}
+	pop	 {r3-r12,lr}
 	bx lr

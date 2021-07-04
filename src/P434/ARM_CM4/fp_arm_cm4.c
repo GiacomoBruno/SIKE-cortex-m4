@@ -141,6 +141,8 @@ void digit_x_digit(const digit_t a, const digit_t b, digit_t* c)
 
 void mp_mul(const digit_t* a, const digit_t* b, digit_t* c, const unsigned int nwords)
 { // Multiprecision comba multiply, c = a*b, where lng(a) = lng(b) = nwords.   
+    mul434_asm(a,b,c);
+    return;
     unsigned int i, j;
     digit_t t = 0, u = 0, v = 0, UV[2];
     unsigned int carry = 0;
