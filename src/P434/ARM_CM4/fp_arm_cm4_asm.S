@@ -320,6 +320,7 @@ fneg434_asm:
 	mov r8, #0xFFFFFFFE
 	mov r9, #0xFFFFFFFF
 
+
 	subs r4, r8, r4		
 	sbcs r5, r9, r5 	
 
@@ -374,6 +375,7 @@ fneg434_asm:
 
 	pop	  {r4-r11,lr}
 	bx lr
+
 
 .thumb_func
 .global mul434_asm
@@ -497,4 +499,199 @@ mul434_asm:
 
 	
 	pop	 {r3-r12,lr}
+	bx lr
+
+.thumb_func
+.global fpcorrection434_asm
+fpcorrection434_asm:
+
+
+//   unsigned int i, borrow = 0;
+//   digit_t mask;
+//
+//   for (i = 0; i < NWORDS_FIELD; i++) {
+//       SUBC(borrow, a[i], ((digit_t*)p434)[i], borrow, a[i]); 
+//   }
+
+//   }
+
+	push {r4-r11, lr}
+
+	mov r8, #0xFFFFFFFF		//p434[0] FFFF FFFF  |  FFFF FFFF
+
+	ldmia r0!, {r4-r7}
+	subs r4, r4, r8
+	sbcs r5, r5, r8
+							//p434[1] FFFF FFFF  |  FFFF FFFF
+	sbcs r6, r6, r8
+	sbcs r7, r7, r8
+
+	vmov r4, s0
+	vmov r5, s1
+	vmov r6, s2
+	vmov r7, s3
+
+	ldmia r0!, {r4, r7}
+							//p434[2] FFFF FFFF  |  FFFF FFFF
+	sbcs r4, r4, r8
+	sbcs r5, r5, r9
+							//p434[3] FDC1 767A  |  E2FF FFFF
+
+	movw r8, #0xFFFF
+	movt r8, #0xE2FF
+	movw r9, #0x767A
+	movt r9, #0xFDC1
+
+	sbcs r6, r6, r8
+	sbcs r7, r7, r9
+
+	vmov r4, s4
+	vmov r5, s5
+	vmov r6, s6
+	vmov r7, s7
+	
+	ldmia r0!, {r4, r7}
+							//p434[4] 7BC6 5C78  |  3158 AEA3
+
+	movw r8, #0xAEA3
+	movt r8, #0x3158
+	movw r9, #0x5C78
+	movt r9, #0x7BC6
+
+	sbcs r4, r4, r8
+	sbcs r5, r5, r9
+
+							//p434[5] 6CFC 5FD6  |  81C5 2056
+
+	movw r8, #0x2056
+	movt r8, #0x81C5
+	movw r9, #0x5FD6
+	movt r9, #0x6CFC
+
+	sbcs r6, r6, r8
+	sbcs r7, r7, r9
+
+	vmov r4, s8
+	vmov r5, s9
+	vmov r6, s10
+	vmov r7, s11
+
+	ldmia r0!, {r4-r5}
+							
+							//p434[6] 0x0002 341F 2717 7344
+	movw r8, #0x7344
+	movt r8, #0x2717
+	movw r9, #0x341F
+	movt r9, #0x0002
+
+
+	sbcs r4, r4, r8
+	sbcs r5, r5, r9
+							
+
+	vmov r4, s12
+	vmov r5, s13
+
+//   mask = 0 - (digit_t)borrow;
+//
+//   borrow = 0;
+//   for (i = 0; i < NWORDS_FIELD; i++) {
+//       ADDC(borrow, a[i], ((digit_t*)p434)[i] & mask, borrow, a[i]); 
+
+	//mask
+	mov r11, #0
+	adc r10, r11, r11
+	sub r10, r11, r10
+
+	mov r8, #0xFFFFFFFF		//p434[0] FFFF FFFF  |  FFFF FFFF
+
+	and r8, r8, r10
+
+	vmov s0, r4
+	vmov s1, r5
+	vmov s2, r6
+	vmov s3, r7
+
+	adds r4, r4, r8
+	adcs r5, r5, r8
+
+							//p434[1] FFFF FFFF  |  FFFF FFFF
+
+	adcs r6, r6, r8
+	adcs r7, r7, r8
+
+	stmia r1!, {r4, r7}
+	vmov s4, r4
+	vmov s5, r5
+	vmov s6, r6
+	vmov s7, r7
+
+							//p434[2] FFFF FFFF  |  FFFF FFFF
+	adds r4, r4, r8
+	adcs r5, r5, r8
+
+							//p434[3] FDC1 767A  |  E2FF FFFF
+
+	movw r8, #0xFFFF
+	movt r8, #0xE2FF
+	movw r9, #0x767A
+	movt r9, #0xFDC1
+	and r8, r8, r10
+	and r9, r9, r10
+
+
+	adcs r6, r6, r8
+	adcs r7, r7, r9
+
+	stmia r1!, {r4, r7}
+
+
+	vmov s8, r4
+	vmov s9, r5
+	vmov s10, r6
+	vmov s11, r7
+
+							//p434[4] 7BC6 5C78  |  3158 AEA3
+
+	movw r8, #0xAEA3
+	movt r8, #0x3158
+	movw r9, #0x5C78
+	movt r9, #0x7BC6
+	and r8, r8, r10
+	and r9, r9, r10
+
+	adds r4, r4, r8
+	adcs r5, r5, r9
+
+								//p434[5] 6CFC 5FD6  |  81C5 2056
+
+	movw r8, #0x2056
+	movt r8, #0x81C5
+	movw r9, #0x5FD6
+	movt r9, #0x6CFC
+	and r8, r8, r10
+	and r9, r9, r10
+
+	adcs r6, r6, r8
+	adcs r7, r7, r9
+
+	stmia r1!, {r4,r7}
+
+	vmov s12, r4
+	vmov s13, r5
+
+							//p434[6] 0x0002 341F 2717 7344
+	movw r8, #0x7344
+	movt r8, #0x2717
+	movw r9, #0x341F
+	movt r9, #0x0002
+	and r8, r8, r10
+	and r9, r9, r10
+
+	adds r4, r4, r8
+	adcs r5, r5, r9
+
+	stmia r1!, {r4-r5}
+
+	pop	{r4-r11,lr}
 	bx lr
