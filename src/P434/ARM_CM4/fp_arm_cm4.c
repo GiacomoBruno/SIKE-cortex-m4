@@ -91,20 +91,21 @@ void fpdiv2_434(const digit_t* a, digit_t* c)
 void fpcorrection434(digit_t* a)
 { // Modular correction to reduce field element a in [0, 2*p434-1] to [0, p434-1].
     //
-    //fpcorrection434_asm(a, a);
+    fpcorrection434_asm(a, a);
 
-    unsigned int i, borrow = 0;
-    digit_t mask;
+   //unsigned int i, borrow = 0;
+   //digit_t mask;
 
-    for (i = 0; i < NWORDS_FIELD; i++) {
-        SUBC(borrow, a[i], ((digit_t*)p434)[i], borrow, a[i]); 
-    }
-    mask = 0 - (digit_t)borrow;
+   //for (i = 0; i < NWORDS_FIELD; i++) {
+   //    SUBC(borrow, a[i], ((digit_t*)p434)[i], borrow, a[i]); 
+   //}
+   //mask = 0 - (digit_t)borrow;
 
-    borrow = 0;
-    for (i = 0; i < NWORDS_FIELD; i++) {
-        ADDC(borrow, a[i], ((digit_t*)p434)[i] & mask, borrow, a[i]); 
-    }
+   //borrow = 0;
+   //for (i = 0; i < NWORDS_FIELD; i++) {
+   //    ADDC(borrow, a[i], ((digit_t*)p434)[i] & mask, borrow, a[i]); 
+   //}
+   // a[0] = mask;
 }
 
 
@@ -145,7 +146,7 @@ void digit_x_digit(const digit_t a, const digit_t b, digit_t* c)
 void mp_mul(const digit_t* a, const digit_t* b, digit_t* c, const unsigned int nwords)
 { // Multiprecision comba multiply, c = a*b, where lng(a) = lng(b) = nwords.   
     
-    return;
+    //return;
     unsigned int i, j;
     digit_t t = 0, u = 0, v = 0, UV[2];
     unsigned int carry = 0;

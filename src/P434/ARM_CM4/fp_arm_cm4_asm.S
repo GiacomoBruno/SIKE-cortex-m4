@@ -514,6 +514,8 @@ fpcorrection434_asm:
 //   }
 
 //   }
+//const uint64_t p434[NWORDS64_FIELD]              = { 0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF, 0xFDC1767AE2FFFFFF, 
+//                                                     0x7BC65C783158AEA3, 0x6CFC5FD681C52056, 0x0002341F27177344 };
 
 	push {r4-r11, lr}
 
@@ -526,15 +528,16 @@ fpcorrection434_asm:
 	sbcs r6, r6, r8
 	sbcs r7, r7, r8
 
-	vmov r4, s0
-	vmov r5, s1
-	vmov r6, s2
-	vmov r7, s3
+	vmov s0,r4
+	vmov s1,r5
+	vmov s2,r6
+	vmov s3,r7
 
-	ldmia r0!, {r4, r7}
+	//stmia r1!, {r4-r7}
+	ldmia r0!, {r4-r7}
 							//p434[2] FFFF FFFF  |  FFFF FFFF
 	sbcs r4, r4, r8
-	sbcs r5, r5, r9
+	sbcs r5, r5, r8
 							//p434[3] FDC1 767A  |  E2FF FFFF
 
 	movw r8, #0xFFFF
@@ -545,12 +548,13 @@ fpcorrection434_asm:
 	sbcs r6, r6, r8
 	sbcs r7, r7, r9
 
-	vmov r4, s4
-	vmov r5, s5
-	vmov r6, s6
-	vmov r7, s7
+	vmov s4,  r4
+	vmov s5,  r5
+	vmov s6,  r6
+	vmov s7,  r7
 	
-	ldmia r0!, {r4, r7}
+	//stmia r1!, {r4-r7}
+	ldmia r0!, {r4-r7}
 							//p434[4] 7BC6 5C78  |  3158 AEA3
 
 	movw r8, #0xAEA3
@@ -571,11 +575,11 @@ fpcorrection434_asm:
 	sbcs r6, r6, r8
 	sbcs r7, r7, r9
 
-	vmov r4, s8
-	vmov r5, s9
-	vmov r6, s10
-	vmov r7, s11
-
+	vmov s8 , 	r4
+	vmov s9 , 	r5
+	vmov s10 , 	r6
+	vmov s11 , 	r7
+	//stmia r1!, {r4-r7}
 	ldmia r0!, {r4-r5}
 							
 							//p434[6] 0x0002 341F 2717 7344
@@ -584,13 +588,15 @@ fpcorrection434_asm:
 	movw r9, #0x341F
 	movt r9, #0x0002
 
-
 	sbcs r4, r4, r8
 	sbcs r5, r5, r9
 							
 
-	vmov r4, s12
-	vmov r5, s13
+	vmov s12,  r4
+	vmov s13,  r5
+	//stmia r1!, {r4-r5}
+	//pop {r4-r11, lr}
+	//bx lr
 
 //   mask = 0 - (digit_t)borrow;
 //
@@ -598,19 +604,19 @@ fpcorrection434_asm:
 //   for (i = 0; i < NWORDS_FIELD; i++) {
 //       ADDC(borrow, a[i], ((digit_t*)p434)[i] & mask, borrow, a[i]); 
 
-	//mask
+	//mask ( 0 = BORROW 1 = NO BORROW)
 	mov r11, #0
 	adc r10, r11, r11
-	sub r10, r11, r10
+	sub r10, r10, #1
 
 	mov r8, #0xFFFFFFFF		//p434[0] FFFF FFFF  |  FFFF FFFF
 
 	and r8, r8, r10
 
-	vmov s0, r4
-	vmov s1, r5
-	vmov s2, r6
-	vmov s3, r7
+	vmov r4,  s0
+	vmov r5,  s1
+	vmov r6,  s2
+	vmov r7,  s3
 
 	adds r4, r4, r8
 	adcs r5, r5, r8
@@ -620,14 +626,14 @@ fpcorrection434_asm:
 	adcs r6, r6, r8
 	adcs r7, r7, r8
 
-	stmia r1!, {r4, r7}
-	vmov s4, r4
-	vmov s5, r5
-	vmov s6, r6
-	vmov s7, r7
+	stmia r1!, {r4-r7}
+	vmov  r4, s4
+	vmov  r5, s5
+	vmov  r6, s6
+	vmov  r7, s7
 
 							//p434[2] FFFF FFFF  |  FFFF FFFF
-	adds r4, r4, r8
+	adcs r4, r4, r8
 	adcs r5, r5, r8
 
 							//p434[3] FDC1 767A  |  E2FF FFFF
@@ -643,13 +649,13 @@ fpcorrection434_asm:
 	adcs r6, r6, r8
 	adcs r7, r7, r9
 
-	stmia r1!, {r4, r7}
+	stmia r1!, {r4-r7}
 
 
-	vmov s8, r4
-	vmov s9, r5
-	vmov s10, r6
-	vmov s11, r7
+	vmov r4 ,	s8
+	vmov r5 ,	s9
+	vmov r6 ,	s10
+	vmov r7 ,	s11
 
 							//p434[4] 7BC6 5C78  |  3158 AEA3
 
@@ -660,7 +666,7 @@ fpcorrection434_asm:
 	and r8, r8, r10
 	and r9, r9, r10
 
-	adds r4, r4, r8
+	adcs r4, r4, r8
 	adcs r5, r5, r9
 
 								//p434[5] 6CFC 5FD6  |  81C5 2056
@@ -675,10 +681,10 @@ fpcorrection434_asm:
 	adcs r6, r6, r8
 	adcs r7, r7, r9
 
-	stmia r1!, {r4,r7}
+	stmia r1!, {r4-r7}
 
-	vmov s12, r4
-	vmov s13, r5
+	vmov r4, s12
+	vmov r5, s13
 
 							//p434[6] 0x0002 341F 2717 7344
 	movw r8, #0x7344
@@ -688,7 +694,7 @@ fpcorrection434_asm:
 	and r8, r8, r10
 	and r9, r9, r10
 
-	adds r4, r4, r8
+	adcs r4, r4, r8
 	adcs r5, r5, r9
 
 	stmia r1!, {r4-r5}

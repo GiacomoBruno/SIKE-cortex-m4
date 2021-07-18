@@ -210,10 +210,6 @@ bool fp_test()
     fprandom434_test(d); fprandom434_test(e); fprandom434_test(f); 
     mp_mul(a, b, c, NWORDS_FIELD);
 
-    print_felm_t(a, "A");
-    print_felm_t(b, "B");
-    print_felm_t(c, "C");
-
     // Field addition over the prime p434
     passed = 1;
     for (n=0; n<TEST_LOOPS; n++)
@@ -226,9 +222,11 @@ bool fp_test()
         fpadd434(b, c, d); fpadd434(d, a, f);                 // f = a+(b+c)
 
         fpcorrection434(e);
-
+        
         fpcorrection434(f);
+
         if (compare_words(e, f, NWORDS_FIELD)!=0) { passed=0; break; }
+        
 
         fpadd434(a, b, d);                                     // d = a+b 
         fpadd434(b, a, e);                                     // e = b+a
@@ -239,7 +237,7 @@ bool fp_test()
         fpzero434(b);
         fpadd434(a, b, d);                                     // d = a+0 
         if (compare_words(a, d, NWORDS_FIELD)!=0) { passed=0; break; }
-        
+                
         fpzero434(b);
         fpcopy434(a, d); 
         
@@ -247,6 +245,7 @@ bool fp_test()
           
         fpadd434(a, d, e);                                     // e = a+(-a)
         fpcorrection434(e);
+
         if (compare_words(e, b, NWORDS_FIELD)!=0) { passed=0; break; }
 
     }
@@ -264,6 +263,8 @@ bool fp_test()
         fpsub434(a, b, d); fpsub434(d, c, e);                 // e = (a-b)-c
         fpadd434(b, c, d); fpsub434(a, d, f);                 // f = a-(b+c)
         fpcorrection434(e);
+
+
         fpcorrection434(f);
         if (compare_words(e, f, NWORDS_FIELD)!=0) { passed=0; break; }
 
