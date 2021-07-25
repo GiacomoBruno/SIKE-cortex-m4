@@ -108,9 +108,15 @@ void fpcorrection434(digit_t* a)
    // a[0] = mask;
 }
 
+void _digit_x_digit(const digit_t a, const digit_t b, digit_t *c)
+{
+    fp_umull_asm(a,b,c);
+}
+
 
 void digit_x_digit(const digit_t a, const digit_t b, digit_t* c)
 { // Digit multiplication, digit * digit -> 2-digit result    
+
     register digit_t al, ah, bl, bh, temp;
     digit_t albl, albh, ahbl, ahbh, res1, res2, res3, carry;
     digit_t mask_low = (digit_t)(-1) >> (sizeof(digit_t)*4), mask_high = (digit_t)(-1) << (sizeof(digit_t)*4);
@@ -143,9 +149,172 @@ void digit_x_digit(const digit_t a, const digit_t b, digit_t* c)
 }
 
 
+void mp_mul_kara_64(const digit_t* a, const digit_t* b, digit_t* c)
+{
+    fp_mul_64_asm(a,b,c);
+}
+
+void mp_mul_128_asm(const digit_t* a, const digit_t* b, digit_t* c)
+{
+    fp_mul_128_asm(a,b,c);
+}
+
+void mp_mul_256_asm(const digit_t* a, const digit_t* b, digit_t* c)
+{
+    digit_t a0b0[8];
+    digit_t a0b1[8];
+    digit_t a1b0[8];
+    digit_t a1b1[8];
+    unsigned int carry = 0;
+
+    fp_mul_128_asm(a,b,a0b0);
+    fp_mul_128_asm(a,&(b[4]), a0b1);
+    fp_mul_128_asm(&(a[4]), b, a1b0);
+    fp_mul_128_asm(&(a[4]), &(b[4]), a1b1);
+
+    c[0] = a0b0[0];
+    c[1] = a0b0[1];
+    c[2] = a0b0[2];
+    c[3] = a0b0[3];
+    ADDC(0    , a1b0[0], a0b1[0], carry, c[4]);
+    ADDC(carry, a1b0[1], a0b1[1], carry, c[5]);
+    ADDC(carry, a1b0[2], a0b1[2], carry, c[6]);
+    ADDC(carry, a1b0[3], a0b1[3], carry, c[7]);
+    ADDC(carry, a1b0[4], a0b1[4], carry, c[8]);
+    ADDC(carry, a1b0[5], a0b1[5], carry, c[9]);
+    ADDC(carry, a1b0[6], a0b1[6], carry, c[10]);
+    ADDC(carry, a1b0[7], a0b1[7], carry, c[11]);
+
+    ADDC(0    , c[4]   , a0b0[4], carry, c[4]);
+    ADDC(carry, c[5]   , a0b0[5], carry, c[5]);
+    ADDC(carry, c[6]   , a0b0[6], carry, c[6]);
+    ADDC(carry, c[7]   , a0b0[7], carry, c[7]);
+    ADDC(carry, c[8]   , 0, carry, c[8]);
+    ADDC(carry, c[9]   , 0, carry, c[9]);
+    ADDC(carry, c[10]  , 0, carry, c[10]);
+    ADDC(carry, c[11]  , 0, carry, c[11]);
+
+    ADDC(0    , c[8]   , a1b1[0], carry, c[8]);
+    ADDC(carry, c[9]   , a1b1[1], carry, c[9]);
+    ADDC(carry, c[10]  , a1b1[2], carry, c[10]);
+    ADDC(carry, c[11]  , a1b1[3], carry, c[11]);
+
+    ADDC(carry, 0      , a1b1[4], carry, c[12]);
+    ADDC(carry, 0      , a1b1[5], carry, c[13]);
+    ADDC(carry, 0      , a1b1[6], carry, c[14]);
+    ADDC(carry, 0      , a1b1[7], carry, c[15]);
+
+}
+
+void mp_mul_512_asm(const digit_t* a, const digit_t* b, digit_t* c)
+{
+    digit_t a0b0[16];
+    digit_t a0b1[16];
+    digit_t a1b0[16];
+    digit_t a1b1[16];
+    unsigned int carry = 0;
+
+    digit_t a1[8];
+
+    a1[0] = a[8];
+    a1[1] = a[9];
+    a1[2] = a[10];
+    a1[3] = a[11];
+    a1[4] = a[12];
+    a1[5] = a[13];
+    a1[6] = 0;
+    a1[7] = 0;
+
+    digit_t b1[8];
+
+    b1[0] = b[8];
+    b1[1] = b[9];
+    b1[2] = b[10];
+    b1[3] = b[11];
+    b1[4] = b[12];
+    b1[5] = b[13];
+    b1[6] = 0;
+    b1[7] = 0;
+
+    mp_mul_256_asm(a,b,a0b0);
+    mp_mul_256_asm(a,b1, a0b1);
+    mp_mul_256_asm(a1, b, a1b0);
+    mp_mul_256_asm(a1, b1, a1b1);
+
+    c[0] = a0b0[0];
+    c[1] = a0b0[1];
+    c[2] = a0b0[2];
+    c[3] = a0b0[3];
+    c[4] = a0b0[4];
+    c[5] = a0b0[5];
+    c[6] = a0b0[6];
+    c[7] = a0b0[7];
+
+    ADDC(0,     a1b0[0], a0b1[0], carry, c[8]);
+    ADDC(carry, a1b0[1], a0b1[1], carry, c[9]);
+    ADDC(carry, a1b0[2], a0b1[2], carry, c[10]);
+    ADDC(carry, a1b0[3], a0b1[3], carry, c[11]);
+    ADDC(carry, a1b0[4], a0b1[4], carry, c[12]);
+    ADDC(carry, a1b0[5], a0b1[5], carry, c[13]);
+    ADDC(carry, a1b0[6], a0b1[6], carry, c[14]);
+    ADDC(carry, a1b0[7], a0b1[7], carry, c[15]);
+    ADDC(carry, a1b0[8], a0b1[8], carry, c[16]);
+    ADDC(carry, a1b0[9], a0b1[9], carry, c[17]);
+    ADDC(carry, a1b0[10], a0b1[10], carry, c[18]);
+    ADDC(carry, a1b0[11], a0b1[11], carry, c[19]);
+    ADDC(carry, a1b0[12], a0b1[12], carry, c[20]);
+    ADDC(carry, a1b0[13], a0b1[13], carry, c[21]);
+    ADDC(carry, a1b0[14], a0b1[14], carry, c[22]);
+    ADDC(carry, a1b0[15], a0b1[15], carry, c[23]);
+
+    ADDC(0    , c[8] , a0b0[8] ,    carry,  c[8]);
+    ADDC(carry, c[9] , a0b0[9] ,    carry,  c[9]);
+    ADDC(carry, c[10], a0b0[10] ,   carry, c[10]);
+    ADDC(carry, c[11], a0b0[11] ,   carry, c[11]);
+    ADDC(carry, c[12], a0b0[12] ,   carry, c[12]);
+    ADDC(carry, c[13], a0b0[13] ,   carry, c[13]);
+    ADDC(carry, c[14], a0b0[14] ,   carry, c[14]);
+    ADDC(carry, c[15], a0b0[15] ,   carry, c[15]);
+    ADDC(carry, c[16], 0        ,   carry, c[16]);
+    ADDC(carry, c[17], 0        ,   carry, c[17]);
+    ADDC(carry, c[18], 0        ,   carry, c[18]);
+    ADDC(carry, c[19], 0        ,   carry, c[19]);
+    ADDC(carry, c[20], 0        ,   carry, c[20]);
+    ADDC(carry, c[21], 0        ,   carry, c[21]);
+    ADDC(carry, c[22], 0        ,   carry, c[22]);
+    ADDC(carry, c[23], 0        ,   carry, c[23]);
+
+
+
+
+
+
+
+
+    ADDC(carry, c[16], a1b1[0],     carry, c[16]);
+    ADDC(carry, c[17], a1b1[1],     carry, c[17]);
+    ADDC(carry, c[18], a1b1[2],     carry, c[18]);
+    ADDC(carry, c[19], a1b1[3],     carry, c[19]);
+    ADDC(carry, c[20], a1b1[4],     carry, c[20]);
+    ADDC(carry, c[21], a1b1[5],     carry, c[21]);
+    ADDC(carry, c[22], a1b1[6],     carry, c[22]);
+    ADDC(carry, c[23], a1b1[7],     carry, c[23]);
+
+    ADDC(0    , 0      , a1b1[8], carry,  c[24]);
+    ADDC(carry, 0      , a1b1[9], carry,  c[25]);
+    ADDC(carry, 0      , a1b1[10], carry, c[26]);
+    ADDC(carry, 0      , a1b1[11], carry, c[27]);
+
+
+}
+
 void mp_mul(const digit_t* a, const digit_t* b, digit_t* c, const unsigned int nwords)
 { // Multiprecision comba multiply, c = a*b, where lng(a) = lng(b) = nwords.   
-    
+    if(nwords == 14)
+    {
+        mp_mul_512_asm(a,b,c);
+        return;
+    }
     //return;
     unsigned int i, j;
     digit_t t = 0, u = 0, v = 0, UV[2];
@@ -153,9 +322,9 @@ void mp_mul(const digit_t* a, const digit_t* b, digit_t* c, const unsigned int n
     
     for (i = 0; i < nwords; i++) {
         for (j = 0; j <= i; j++) {
-            MUL(a[j], b[i-j], UV+1, UV[0]); 
-            ADDC(0, UV[0], v, carry, v); 
-            ADDC(carry, UV[1], u, carry, u); 
+            MUL(a[j], b[i-j], NULL, UV[0]); 
+            ADDC(0, UV[0], v, carry, v);
+            ADDC(carry, UV[1], u, carry, u);
             t += carry;
         }
         c[i] = v;

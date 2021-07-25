@@ -76,7 +76,23 @@ void print_felm_t(felm_t n, const char *name)
     for(int i = 0; i < NWORDS_FIELD; i++)
     {
         unsigned char output[100];
-        sprintf((char*)output, "%u", n[i]);
+        sprintf((char*)output, "%x", n[i]);
+        send_USART_str(output);
+    }
+
+    sprintf((char*)output1, "\n");
+    send_USART_str(output1);
+}
+
+void print_digit_t_array(digit_t* n, int length, const char* name)
+{
+    unsigned char output1[100];
+    sprintf((char*)output1, "%s", name);
+    send_USART_str(output1);
+    for(int i = 0; i < length; i++)
+    {
+        unsigned char output[100];
+        sprintf((char*)output, "%x", n[i]);
         send_USART_str(output);
     }
 
@@ -176,29 +192,157 @@ void default_c(felm_t c)
 279370091
 111411
 */
-    c[0]        =      2885545510;
-    c[1]        =      3180603157;
-    c[2]        =      645886178;
-    c[3]        =      3008698858;
-    c[4]        =      3386645481;
-    c[5]        =      2688087034;
-    c[6]        =      4065453692;
-    c[7]        =      1500630097;
-    c[8]        =      943733405;
-    c[9]        =      320716748;
-    c[10]       =      4024819499;
-    c[11]       =      987730411;
-    c[12]       =      279370091;
-    c[13]       =      111411;
+    c[0]        =      0;
+    c[1]        =      0;
+    c[2]        =      0;
+    c[3]        =      0;
+    c[4]        =      0;
+    c[5]        =      0;
+    c[6]        =      0;
+    c[7]        =      0;
+    c[8]        =      0;
+    c[9]        =      0;
+    c[10]       =      0;
+    c[11]       =      0;
+    c[12]       =      0;
+    c[13]       =      0;
 }
+
+/*
+
+
+Bench 128 bit multiplication using standard algorithm:      1100 cycles
+
+
+RESULT
+83842f5e    83842f5e
+4d0a56de    4d0a56de
+3a303f01    3a303f01
+94b61c8b    94b61c8b
+383e8d4f    383e8d4f
+cc8127d4    cc8127d4
+48fafacc    48fafacc
+b311b8ce    b311b8ce
+
+
+Bench 128 bit multiplication using karatsuba algorithm:       199 cycles
+
+
+RESULT
+
+
+*/
 
 bool fp_test()
 { // Tests for the field arithmetic
     bool OK = true;
     int n, passed;
     felm_t a, b, c, d, e, f, ma, mb, mc, md, me, mf;
+    dfelm_t cc;
+    default_a(a); default_b(b); default_c(c);
+    digit_t uv[2];
 
 
+    unsigned long long cycles, cycles1, cycles2;
+
+    cycles1 = cpucycles();
+    digit_x_digit(a[0],b[0], uv);
+    cycles2 = cpucycles();
+
+    cycles = (cycles2-cycles1);
+/*
+Bench 512 bit multiplication using standard algorithm:     11035 cycles
+
+
+RESULT
+[0]  83842f5e       83842f5e
+[1]  4d0a56de       4d0a56de
+[2]  3a303f01       3a303f01
+[3]  94b61c8b       94b61c8b
+[4]  35b97781       35b97781
+[5]  ad2b00da       ad2b00da
+[6]  9b767380       9b767380
+[7]  9d09b7a5       9d09b7a5
+[8]  59034406       59034406
+[9]  52a0201c       52a0201c
+[10] c1258b4f       c1258b4f
+[11] 94e62e33       94e62e33
+[12] e13ae8fc       e13ae8fc
+[13] c71dd695       c71dd695
+[14] 139a77fd       139a77fd-- error
+[15] 8e0b93c7       8e0b93c7
+[16] d676fdd7       d676fdd7
+[17] 1e96721a       1e96721a
+[18] 1769654d       1769654d
+[19] 86fa3524       86fa3524
+[20] 45ebbf7f       45ebbf7f
+[21] c9429e92       c9429e92
+[22] 441829a2       441829a2
+[23] e3145cd7       e3145cd7
+
+
+Bench 512 bit multiplication using karatsuba algorithm:      4849 cycles
+
+83842f5e
+4d0a56de
+3a303f01
+94b61c8b
+35b97781
+ad2b00da
+9b767380
+9d09b7a5
+59034406
+52a0201c
+c1258b4f
+94e62e33
+e13ae8fc
+c71dd695
+139a77fd
+8e0b93c7
+d676fdd7
+1e96721a
+1769654d
+86fa3524
+45ebbf7f
+c9429e92
+441829a2
+e3145cd7
+
+
+Bench 512 bit multiplication using karatsuba algorithm:      4849 cycles
+
+
+RESULT
+
+
+*/
+
+  // print_bench("Bench 512 bit multiplication using standard algorithm: ", cycles);
+  // print_test("\n");
+
+  // cycles1 = cpucycles();
+  // mp_mul(a,b,cc,14);
+  // cycles2 = cpucycles();
+
+  // cycles = (cycles2-cycles1);
+
+  // print_bench("Bench 512 bit multiplication using standard algorithm: ", cycles);
+  // print_test("\n");
+  // print_digit_t_array(cc,24, "RESULT");
+
+  // default_a(a); default_b(b); default_c(c);
+  // cycles1 = cpucycles();
+  // mp_mul_512_asm(a,b,cc);
+  // cycles2 = cpucycles();
+
+  // cycles = (cycles2-cycles1);
+
+  // print_bench("Bench 512 bit multiplication using karatsuba algorithm: ", cycles);
+  // print_test("\n");
+
+  // print_digit_t_array(cc,24, "RESULT");
+
+    //print_digit_t_array(uv, 2, "uv");
 
 
     print_test("\n--------------------------------------------------------------------------------------------------------\n\n"); 
@@ -300,40 +444,161 @@ bool fp_test()
         fpcopy434(ma, mc);
         from_mont(mc, c);
         if (compare_words(a, c, NWORDS_FIELD)!=0) { passed=0; break; }
+
+        to_mont(a, ma); to_mont(b, mb); to_mont(c, mc); 
+        fpmul434_mont(ma, mb, md); 
+        fpmul434_mont(md, mc, me);                          // e = (a*b)*c
         
-        to_mont(a, ma); to_mont(b, mb); to_mont(c, mc); 
-        fpmul434_mont(ma, mb, md); fpmul434_mont(md, mc, me);                          // e = (a*b)*c
-        fpmul434_mont(mb, mc, md); fpmul434_mont(md, ma, mf);                          // f = a*(b*c)
+        fpmul434_mont(mb, mc, md); 
+        fpmul434_mont(md, ma, mf);                          // f = a*(b*c)
+
+
         from_mont(me, e);
         from_mont(mf, f);
+
+ 
         if (compare_words(e, f, NWORDS_FIELD)!=0) { passed=0; break; }
-      
+
         to_mont(a, ma); to_mont(b, mb); to_mont(c, mc); 
+
         fpadd434(mb, mc, md); fpmul434_mont(ma, md, me);                               // e = a*(b+c)
-        fpmul434_mont(ma, mb, md); fpmul434_mont(ma, mc, mf); fpadd434(md, mf, mf);    // f = a*b+a*c
+        
+        fpmul434_mont(ma, mb, md); 
+        fpmul434_mont(ma, mc, mf); 
+
+        mp_mul(ma, mb, cc, 14);
+        print_digit_t_array(cc, 28, "CC");
+
+        fpadd434(md, mf, mf);    // f = a*b+a*c
         from_mont(me, e);
         from_mont(mf, f);
+/*
+md          
+947b4b9     7092b33
+b440d68b    e599852f
+ef0ce557    4dd341cf
+450779d8    a78e10aa
+165d1b7e    b273a073
+ae6547a5    829bc605
+9ce2ceee    91b97fdc
+c1fe8dbc    1ac299f8
+ca3253fc    f207c9f3
+dcca3ac8    b3a4c62a
+670a2412    9c1e23de
+25d745b4    d27b0eaf
+4db9bb13    ed638648
+140b        20842
+            
+
+mf          
+2e56ce4a    2e56ce4b
+e105416f    e105416f
+39665f00    39665f00
+450606ce    280606ce
+5d6cfccc    5b2e7347
+6188ec8f    92e19b33
+e49b925b    6061eed3
+1cacf381    9e7213d8
+82a146d0    ef9da6a6
+3219dd80    593150c4
+d01d5b3     d0409d2
+49095c47    49095c47
+6aadec60    6aadec60
+1da4c       1da4c
+
+
+////
+
+CC
+33b402b6    33b402b6         33b402b6   33b402b6
+51b24632    51b24632         51b24632   51b24632
+47e31986    47e31986         47e31986   47e31986
+d3964f58    d3964f58         d3964f58   d3964f58
+c99e2ba     c99e2ba          c99e2ba    c99e2ba
+eb380c94    eb380c94         eb380c94   eb380c94
+ecdabb57    ecdabb57         ecdabb57   ecdabb57
+a003d321    a003d320--error  a003d320   a003d320    
+c4924837    c4924837         c4924837   c4924837
+84bab2cc    84bab2cc         84bab2cc   84bab2cc
+3d101468    3d101467--error  3d101467   3d101467    
+fad76498    fad76497--error  fad76497   fad76497    
+2ea7e163    2ea7e163         2ea7e163   2ea7e163
+eae777ef    eae777ef         eae777ef   eae777ef
+7e7ada83    7e7ada83         7e7ada83   7e7ada83
+e95a6b83    e95a6b83         e95a6b83   e95a6b83
+47f47592    47f47592         47f47592   47f47592
+126535bf    126535bf         126535bf   126535bf
+6889c9d8    6889c9d8         6889c9d8   6889c9d8
+6fc17eb2    6fc17eb2         6fc17eb2   6fc17eb2
+fe5eaad9    fe5eaad9         fe5eaad9   fe5eaad9
+c8adb77f    c8adb77f         c8adb77f   c8adb77f
+d0ea3208    d0ea3208         d0ea3208   d0ea3208
+c47f652f    c47f652f         c47f652f   c47f652f
+aaf983d7    aaf983d7         aaf983d7   aaf983d7
+9e144cc9    9e144cc9         9e144cc9   9e144cc9
+40731f34    40731f34         40731f34   40731f34
+0           0                0          0
+
+CC
+33b402b6
+51b24632
+47e31986
+d3964f58
+c99e2ba
+eb380c94
+ecdabb57
+a003d320
+c4924837
+84bab2cc
+3d101467
+fad76497
+2ea7e163
+eae777ef
+7e7ada83
+e95a6b83
+47f47592
+126535bf
+6889c9d8
+6fc17eb2
+fe5eaad9
+c8adb77f
+d0ea3208
+c47f652f
+aaf983d7
+9e144cc9
+40731f34
+0
+
+*/
+
+
+        print_felm_t(e, "E");
+        print_felm_t(f, "F");
+        return false;
         if (compare_words(e, f, NWORDS_FIELD)!=0) { passed=0; break; }
-       
+
+        print_test("test2");
+
         to_mont(a, ma); to_mont(b, mb);
         fpmul434_mont(ma, mb, md);                                                      // d = a*b 
         fpmul434_mont(mb, ma, me);                                                      // e = b*a 
         from_mont(md, d);
         from_mont(me, e);
         if (compare_words(d, e, NWORDS_FIELD)!=0) { passed=0; break; }
-        
+
         to_mont(a, ma);
         fpzero434(b); b[0] = 1; to_mont(b, mb);
         fpmul434_mont(ma, mb, md);                                                      // d = a*1  
         from_mont(ma, a);
         from_mont(md, d);                
         if (compare_words(a, d, NWORDS_FIELD)!=0) { passed=0; break; }
-        
+
         fpzero434(b); to_mont(b, mb);
         fpmul434_mont(ma, mb, md);                                                      // d = a*0  
         from_mont(mb, b);
         from_mont(md, d);                
         if (compare_words(b, d, NWORDS_FIELD)!=0) { passed=0; break; } 
+
     }
     if (passed==1) print_test("  GF(p) multiplication tests ...................................... PASSED");
     else { print_test("  GF(p) multiplication tests... FAILED"); print_test("\n"); return false; }

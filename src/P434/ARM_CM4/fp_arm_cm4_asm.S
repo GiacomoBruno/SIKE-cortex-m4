@@ -377,6 +377,24 @@ fneg434_asm:
 	bx lr
 
 
+.macro MUL64_COMBA_CUT _A0, _A1, _B0, _B1, _C0, _C1, _C2, _C3, _T0, _ZR
+	
+	mov \_ZR, #0
+
+	umaal \_A0, \_B0, \_A1, \_B0
+	adds \_C1, \_C1, \_C3
+	adc \_C2, \_C2, \_ZR
+
+	umaal \_T0, \_B1, \_A1, \_B1
+	adds \_C1, \_C1, \_A0
+	adcs \_C2, \_C2, \_B0
+	adc \_C3, \_ZR, \_ZR
+
+	adds \_C2, \_C2, \_T0
+	adc \_C3, \_C3, \_B1
+
+.endm
+
 .thumb_func
 .global mul434_asm
 mul434_asm:
@@ -502,29 +520,29 @@ mul434_asm:
 	bx lr
 
 .thumb_func
+.global fp_umull_asm
+fp_umull_asm:
+	umull r0,r1,r0,r1
+	stmia r2!, {r0-r1}
+	bx lr
+
+.thumb_func
 .global fpcorrection434_asm
 fpcorrection434_asm:
 
 
-//   unsigned int i, borrow = 0;
-//   digit_t mask;
-//
-//   for (i = 0; i < NWORDS_FIELD; i++) {
-//       SUBC(borrow, a[i], ((digit_t*)p434)[i], borrow, a[i]); 
-//   }
-
-//   }
-//const uint64_t p434[NWORDS64_FIELD]              = { 0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF, 0xFDC1767AE2FFFFFF, 
-//                                                     0x7BC65C783158AEA3, 0x6CFC5FD681C52056, 0x0002341F27177344 };
 
 	push {r4-r11, lr}
 
-	mov r8, #0xFFFFFFFF		//p434[0] FFFF FFFF  |  FFFF FFFF
+	mov r8, #0xFFFFFFFF		
+	//p434[0] FFFF FFFF  |  FFFF FFFF
 
 	ldmia r0!, {r4-r7}
 	subs r4, r4, r8
 	sbcs r5, r5, r8
-							//p434[1] FFFF FFFF  |  FFFF FFFF
+							
+							
+	//p434[1] FFFF FFFF  |  FFFF FFFF
 	sbcs r6, r6, r8
 	sbcs r7, r7, r8
 
@@ -535,10 +553,12 @@ fpcorrection434_asm:
 
 	//stmia r1!, {r4-r7}
 	ldmia r0!, {r4-r7}
-							//p434[2] FFFF FFFF  |  FFFF FFFF
+	
+	//p434[2] FFFF FFFF  |  FFFF FFFF
 	sbcs r4, r4, r8
 	sbcs r5, r5, r8
-							//p434[3] FDC1 767A  |  E2FF FFFF
+	
+	//p434[3] FDC1 767A  |  E2FF FFFF
 
 	movw r8, #0xFFFF
 	movt r8, #0xE2FF
@@ -555,7 +575,8 @@ fpcorrection434_asm:
 	
 	//stmia r1!, {r4-r7}
 	ldmia r0!, {r4-r7}
-							//p434[4] 7BC6 5C78  |  3158 AEA3
+	
+	//p434[4] 7BC6 5C78  |  3158 AEA3
 
 	movw r8, #0xAEA3
 	movt r8, #0x3158
@@ -565,7 +586,7 @@ fpcorrection434_asm:
 	sbcs r4, r4, r8
 	sbcs r5, r5, r9
 
-							//p434[5] 6CFC 5FD6  |  81C5 2056
+	//p434[5] 6CFC 5FD6  |  81C5 2056
 
 	movw r8, #0x2056
 	movt r8, #0x81C5
@@ -579,10 +600,11 @@ fpcorrection434_asm:
 	vmov s9 , 	r5
 	vmov s10 , 	r6
 	vmov s11 , 	r7
-	//stmia r1!, {r4-r7}
+
 	ldmia r0!, {r4-r5}
 							
-							//p434[6] 0x0002 341F 2717 7344
+	//p434[6] 0x0002 341F 2717 7344
+
 	movw r8, #0x7344
 	movt r8, #0x2717
 	movw r9, #0x341F
@@ -594,22 +616,15 @@ fpcorrection434_asm:
 
 	vmov s12,  r4
 	vmov s13,  r5
-	//stmia r1!, {r4-r5}
-	//pop {r4-r11, lr}
-	//bx lr
-
-//   mask = 0 - (digit_t)borrow;
-//
-//   borrow = 0;
-//   for (i = 0; i < NWORDS_FIELD; i++) {
-//       ADDC(borrow, a[i], ((digit_t*)p434)[i] & mask, borrow, a[i]); 
 
 	//mask ( 0 = BORROW 1 = NO BORROW)
 	mov r11, #0
 	adc r10, r11, r11
 	sub r10, r10, #1
 
-	mov r8, #0xFFFFFFFF		//p434[0] FFFF FFFF  |  FFFF FFFF
+	mov r8, #0xFFFFFFFF		
+	
+	//p434[0] FFFF FFFF  |  FFFF FFFF
 
 	and r8, r8, r10
 
@@ -621,7 +636,7 @@ fpcorrection434_asm:
 	adds r4, r4, r8
 	adcs r5, r5, r8
 
-							//p434[1] FFFF FFFF  |  FFFF FFFF
+	//p434[1] FFFF FFFF  |  FFFF FFFF
 
 	adcs r6, r6, r8
 	adcs r7, r7, r8
@@ -632,11 +647,12 @@ fpcorrection434_asm:
 	vmov  r6, s6
 	vmov  r7, s7
 
-							//p434[2] FFFF FFFF  |  FFFF FFFF
+	//p434[2] FFFF FFFF  |  FFFF FFFF
+
 	adcs r4, r4, r8
 	adcs r5, r5, r8
 
-							//p434[3] FDC1 767A  |  E2FF FFFF
+	//p434[3] FDC1 767A  |  E2FF FFFF
 
 	movw r8, #0xFFFF
 	movt r8, #0xE2FF
@@ -651,13 +667,12 @@ fpcorrection434_asm:
 
 	stmia r1!, {r4-r7}
 
-
 	vmov r4 ,	s8
 	vmov r5 ,	s9
 	vmov r6 ,	s10
 	vmov r7 ,	s11
 
-							//p434[4] 7BC6 5C78  |  3158 AEA3
+	//p434[4] 7BC6 5C78  |  3158 AEA3
 
 	movw r8, #0xAEA3
 	movt r8, #0x3158
@@ -669,7 +684,7 @@ fpcorrection434_asm:
 	adcs r4, r4, r8
 	adcs r5, r5, r9
 
-								//p434[5] 6CFC 5FD6  |  81C5 2056
+	//p434[5] 6CFC 5FD6  |  81C5 2056
 
 	movw r8, #0x2056
 	movt r8, #0x81C5
@@ -686,7 +701,8 @@ fpcorrection434_asm:
 	vmov r4, s12
 	vmov r5, s13
 
-							//p434[6] 0x0002 341F 2717 7344
+	//p434[6] 0x0002 341F 2717 7344
+
 	movw r8, #0x7344
 	movt r8, #0x2717
 	movw r9, #0x341F
@@ -701,3 +717,257 @@ fpcorrection434_asm:
 
 	pop	{r4-r11,lr}
 	bx lr
+
+
+
+//
+
+.macro KARATSUBA_64 A0, A1, B0, B1, C0, C1, C2, C3
+
+	mov \C2, #0
+	mov \C3, #0
+
+
+	umull \C0, \C1, \A0, \B0 
+	umlal \C1, \C2, \A1, \B0
+	umlal \C1, \C2, \A0, \B1
+	umlal \C2, \C3, \A1, \B1
+
+.endm
+
+.macro KARATSUBA_128 A0, A1, A2, A3, B0, B1, B2, B3, C0, C1, C2, C3, C4,C5, C6, C7, T0, T1, T2, T3, T4, T5
+
+	vmov r4, \A0 //s0
+	vmov r5, \A1 //s1
+
+	vmov r6, \B0 //s4
+	vmov r7, \B1 //s5
+
+	KARATSUBA_64 r4,r5,r6,r7,r8,r9,r10,r11
+
+	
+	//stmia r2!, {r8-r9}
+	vmov \C0, r8
+	vmov \C1, r9
+	//T4 = s8
+	//T5 = s9
+	vmov \T4, r10
+	vmov \T5, r11
+
+	vmov r6, \B2 //s6
+	vmov r7, \B3 //s7
+
+	KARATSUBA_64 r4,r5,r6,r7,r8,r9,r10,r11
+
+	//T0 = s10
+	//T1 = S11
+	//T2 = S12
+	//T3 = S13
+	vmov \T0, r8
+	vmov \T1, r9
+	vmov \T2, r10
+	vmov \T3, r11
+
+	vmov r4, \A2 //s2
+	vmov r5, \A3 //s3
+
+	vmov r6, \B0 //s4
+	vmov r7, \B1 //s5
+
+	KARATSUBA_64 r4,r5,r6,r7,r8,r9,r10,r11
+	
+	vmov r4, \T0
+	vmov r5, \T1
+	vmov r6, \T2
+	vmov r7, \T3
+
+	adds r4, r4, r8
+	adcs r5, r5, r9
+	adcs r6, r6, r10
+	adcs r7, r7, r11
+
+	vmov r8, \T4 //s8
+	vmov r9, \T5 //s9
+
+	adds r4, r4, r8
+	adcs r5, r5, r9
+	mov r8, #0
+	adcs r6, r6, r8
+	adcs r7, r7, r8
+
+	//stmia r2!, {r4-r5}
+	vmov \C2, r4
+	vmov \C3, r5
+
+	vmov \T4, r6
+	vmov \T5, r7
+
+	vmov r4, \A2 //s2
+	vmov r5, \A3 //s3
+
+	vmov r6, \B2 //s6
+	vmov r7, \B3 //s7
+
+	KARATSUBA_64 r4,r5,r6,r7,r8,r9,r10,r11
+
+	vmov r4, \T4 //s8
+	vmov r5, \T5 //s9
+
+	adds r8, r8, r4
+	adcs r9, r9, r5
+	mov r4, #0
+	adcs r10, r10, r4
+	adcs r11, r11, r4
+
+	//stmia r2!, {r8-r11}
+	vmov \C4, r8
+	vmov \C5, r9
+	vmov \C6, r10
+	vmov \C7, r11
+
+.endm
+
+.thumb_func
+.global fp_mul_128_asm
+fp_mul_128_asm:
+	push {r3-r12, lr}
+	vldm r0, {s0-s3}
+	vldm r1, {s4-s7}
+
+	KARATSUBA_128 s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17, s18, s19, s20, s21
+
+	vstm r2, {s8-s15}
+/* 			      A0, A1, A2, A3, B0, B1, B2, B3, C0, C1, C2 , C3 , C4 , C5 , C6 , C7 , T0 , T1 , T2 , T3 , T4 , T5
+	vmov r4, s0
+	vmov r5, s1
+
+	vmov r6, s4
+	vmov r7, s5
+
+	KARATSUBA_64 r4,r5,r6,r7,r8,r9,r10,r11
+
+	//vmov s8, r8
+	//vmov s9, r9
+	
+	stmia r2!, {r8-r9}
+	vmov s8, r10
+	vmov s9, r11
+
+	vmov r6, s6
+	vmov r7, s7
+
+	KARATSUBA_64 r4,r5,r6,r7,r8,r9,r10,r11
+
+	vmov s10, r8
+	vmov s11, r9
+	vmov s12, r10
+	vmov s13, r11
+
+	vmov r4, s2
+	vmov r5, s3
+
+	vmov r6, s4
+	vmov r7, s5
+
+	KARATSUBA_64 r4,r5,r6,r7,r8,r9,r10,r11
+	
+	vmov r4, s10
+	vmov r5, s11
+	vmov r6, s12
+	vmov r7, s13
+
+	adds r4, r4, r8
+	adcs r5, r5, r9
+	adcs r6, r6, r10
+	adcs r7, r7, r11
+
+	vmov r8, s8
+	vmov r9, s9
+
+	adds r4, r4, r8
+	adcs r5, r5, r9
+	mov r8, #0
+	adcs r6, r6, r8
+	adcs r7, r7, r8
+
+	stmia r2!, {r4-r5}
+
+	vmov s8, r6
+	vmov s9, r7
+
+	vmov r4, s2
+	vmov r5, s3
+
+	vmov r6, s6
+	vmov r7, s7
+
+	KARATSUBA_64 r4,r5,r6,r7,r8,r9,r10,r11
+
+	vmov r4, s8
+	vmov r5, s9
+
+	adds r8, r8, r4
+	adcs r9, r9, r5
+	mov r4, #0
+	adcs r10, r10, r4
+	adcs r11, r11, r4
+
+	stmia r2!, {r8-r11}
+*/
+
+	pop {r3-r12, lr}
+	bx lr
+
+
+.thumb_func
+.global fp_mul_64_asm
+fp_mul_64_asm:
+	push {r4-r12, lr}
+
+	ldmia r0!, {r4,r5}
+	ldmia r1!, {r6,r7}
+
+	KARATSUBA_64 r4,r5,r6,r7,r8,r9,r10,r11
+
+	stmia r2!, {r8-r12}
+
+	pop {r4-r12, lr}
+	bx lr
+
+// Multiprecision comba multiply, c = a*b, where lng(a) = lng(b) = nwords.   
+
+
+
+
+
+//return;
+//unsigned int i, j;
+//digit_t t = 0, u = 0, v = 0, UV[2];
+//unsigned int carry = 0;
+//
+//for (i = 0; i < nwords; i++) {
+//	for (j = 0; j <= i; j++) {
+//		MUL(a[j], b[i-j], NULL, UV[0]); 
+//		ADDC(0, UV[0], v, carry, v); 
+//		ADDC(carry, UV[1], u, carry, u); 
+//		t += carry;
+//	}
+//	c[i] = v;
+//	v = u; 
+//	u = t;
+//	t = 0;
+//}
+//
+//for (i = nwords; i < 2*nwords-1; i++) {
+//	for (j = i-nwords+1; j < nwords; j++) {
+//		MUL(a[j], b[i-j], UV+1, UV[0]); 
+//		ADDC(0, UV[0], v, carry, v); 
+//		ADDC(carry, UV[1], u, carry, u); 
+//		t += carry;
+//	}
+//	c[i] = v;
+//	v = u; 
+//	u = t;
+//	t = 0;
+//}
+//c[2*nwords-1] = v;
