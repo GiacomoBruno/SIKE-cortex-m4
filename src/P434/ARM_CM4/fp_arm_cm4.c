@@ -50,7 +50,24 @@ __inline void fpadd434(const digit_t* a, const digit_t* b, digit_t* c)
   // Inputs: a, b in [0, 2*p434-1] 
   // Output: c in [0, 2*p434-1] 
   fpadd434_asm(a, b, c);
+  return;
+    unsigned int i, carry = 0;
+    digit_t mask;
 
+    for (i = 0; i < NWORDS_FIELD; i++) {
+        ADDC(carry, a[i], b[i], carry, c[i]); 
+    }
+
+    carry = 0;
+    for (i = 0; i < NWORDS_FIELD; i++) {
+        SUBC(carry, c[i], ((digit_t*)p434x2)[i], carry, c[i]); 
+    }
+    mask = 0 - (digit_t)carry;
+
+    carry = 0;
+    for (i = 0; i < NWORDS_FIELD; i++) {
+        ADDC(carry, c[i], ((digit_t*)p434x2)[i] & mask, carry, c[i]); 
+    }
 } 
 
 __inline void fpsub434(const digit_t* a, const digit_t* b, digit_t* c)
@@ -58,8 +75,20 @@ __inline void fpsub434(const digit_t* a, const digit_t* b, digit_t* c)
   // Inputs: a, b in [0, 2*p434-1] 
   // Output: c in [0, 2*p434-1] 
 
-  fpsub434_asm(a, b, c);
-  
+    fpsub434_asm(a, b, c);
+    return;
+    unsigned int i, borrow = 0;
+    digit_t mask;
+
+    for (i = 0; i < NWORDS_FIELD; i++) {
+        SUBC(borrow, a[i], b[i], borrow, c[i]); 
+    }
+    mask = 0 - (digit_t)borrow;
+
+    borrow = 0;
+    for (i = 0; i < NWORDS_FIELD; i++) {
+        ADDC(borrow, c[i], ((digit_t*)p434x2)[i] & mask, borrow, c[i]); 
+    }
 }
 
 
@@ -100,28 +129,31 @@ void fpcorrection434(digit_t* a)
 void digit_x_digit(const digit_t a, const digit_t b, digit_t* c)
 { // Digit multiplication, digit * digit -> 2-digit result    
 
+    return dxd_asm(a,b,c);
+
+
     register digit_t al, ah, bl, bh, temp;
     digit_t albl, albh, ahbl, ahbh, res1, res2, res3, carry;
     digit_t mask_low = (digit_t)(-1) >> (sizeof(digit_t)*4), mask_high = (digit_t)(-1) << (sizeof(digit_t)*4);
-
+////
     al = a & mask_low;                        // Low part
     ah = a >> (sizeof(digit_t) * 4);          // High part
     bl = b & mask_low;
     bh = b >> (sizeof(digit_t) * 4);
-
+///
     albl = al*bl;
     albh = al*bh;
     ahbl = ah*bl;
     ahbh = ah*bh;
     c[0] = albl & mask_low;                   // C00
-
+///
     res1 = albl >> (sizeof(digit_t) * 4);
     res2 = ahbl & mask_low;
     res3 = albh & mask_low;  
     temp = res1 + res2 + res3;
     carry = temp >> (sizeof(digit_t) * 4);
     c[0] ^= temp << (sizeof(digit_t) * 4);    // C01   
-
+///
     res1 = ahbl >> (sizeof(digit_t) * 4);
     res2 = albh >> (sizeof(digit_t) * 4);
     res3 = ahbh & mask_low;
@@ -131,84 +163,16 @@ void digit_x_digit(const digit_t a, const digit_t b, digit_t* c)
     c[1] ^= (ahbh & mask_high) + carry;       // C11
 }
 
-void mp_mul_192_asm(const digit_t* a, const digit_t* b, digit_t* c)
+
+void mp_mul_asm(const digit_t* a, const digit_t* b, digit_t* c, const unsigned int nwords)
 {
-    fp_mul_192(a,b,c);
-}
-
-void mp_mul_192(const digit_t* a, const digit_t* b, digit_t* c)
-{
-    mp_mul(a,b,c, 3);
-}
-
-void mp_mul_256_asm(const digit_t* a, const digit_t* b, digit_t* c)
-{
-    fp_mul_256(a,b,c);
-}
-
-void mp_mul_256(const digit_t* a, const digit_t* b, digit_t* c)
-{
-    mp_mul(a,b,c, 4);
-}
-
-void mp_mul_512_asm(const digit_t* a, const digit_t* b, digit_t* c)
-{
-    fp_mul_512(a,b,c);
-}
-void mp_mul_512(const digit_t* a, const digit_t* b, digit_t* c)
-{
-    mp_mul(a,b,c, 8);
-}
-
-void mp_mul_986_asm(const digit_t* a, const digit_t* b, digit_t* c)
-{
-    fp_mul_986(a,b,c);
-}
-void mp_mul_986(const digit_t* a, const digit_t* b, digit_t* c)
-{
-    mp_mul(a,b,c, 14);
-}
-
-void mp_mul_8x6pk_asm(const digit_t* a, const digit_t* b, const digit_t* num, digit_t* c)
-{
-    digit_t* aa[14];
-    for(int i = 0; i < 14; i++)
-    {
-        aa[i] = i > 6 ? 0 : a[i];
-    }
-
-    fp_KARATSUBA_8X6_SUMC0C1C2C3C4C5C6C7(aa,b,c);
-}
-
-
-void mp_mul_8x6pk(const digit_t* a, const digit_t* b, const digit_t* num, digit_t* c)
-{
-    digit_t* aa[14];
-    for(int i = 0; i < 14; i++)
-    {
-        aa[i] = i > 6 ? 0 : a[i];
-    }
-
-    mp_mul(aa, b, c, 8);
-   // unsigned int carry = 0;
-   //for(int i = 0; i < 8; i++)
-   //{
-   //    ADDC(carry, num[i], c[i], carry, c[i]);
-   //}
-   //for(int i = 8; i < 14; i++)
-   //    ADDC(carry, 0, c[i], carry, c[i]);
-
-
+    fpmul434_asm(a,b,c);
 }
 
 
 void mp_mul(const digit_t* a, const digit_t* b, digit_t* c, const unsigned int nwords)
 { // Multiprecision comba multiply, c = a*b, where lng(a) = lng(b) = nwords.   
 
-    //if(nwords == 14) {
-    //    mp_mul_448(a,b,c);
-    //    return;
-    //}
     unsigned int i, j;
     digit_t t = 0, u = 0, v = 0, UV[2];
     unsigned int carry = 0;

@@ -14,7 +14,7 @@ RANLIB=ranlib
 
 ARCH_FLAGS  = -mthumb -mcpu=cortex-m4 -mfloat-abi=hard -mfpu=fpv4-sp-d16 -MD -DSTM32F4
 CFLAGS		= -c $(OPT) -std=c99 -D $(USE_OPT_LEVEL) -D _ARM_CM4_ -D __NIX__ -D _NO_CACHE_MEM_ -D _DISABLE_CACHE_MEM_ $(INLINING_SETTINGS) \
-	          -I./src/libopencm3/include -fno-common 
+	          -I./src/libopencm3/include -fno-common  -w
 LDFLAGS		+= --static -Wl,--start-group -lc -lgcc -lnosys -Wl,--end-group -T$(LDSCRIPT) -nostartfiles -Wl,--gc-sections $(ARCH_FLAGS)
 
 ifeq "$(USE_OPT_LEVEL)" "_GENERIC_"
@@ -47,7 +47,13 @@ all: lib434 sike434/arith_tests-p434.bin lib503 sike503/arith_tests-p503.bin lib
 
 all434: lib434 sike434/arith_tests-p434.bin
 
-test: lib434 MISC_TESTS/test.bin
+test4: lib434 MISC_TESTS/test4.bin
+
+test5: lib503 MISC_TESTS/test5.bin
+
+test6: lib610 MISC_TESTS/test6.bin
+
+test7: lib751 MISC_TESTS/test7.bin
 
 objs377/%.o: src/P377/%.c
 	@mkdir -p $(@D)
@@ -140,8 +146,18 @@ objs610/arith_tests-p610.o: tests/arith_tests-p610.c
 objs751/arith_tests-p751.o: tests/arith_tests-p751.c
 	$(ARMCC) -c $(CFLAGS) $(ARCH_FLAGS) tests/arith_tests-p751.c -o objs751/arith_tests-p751.o
 
-MISC_TESTS/test.o: MISC_TESTS/test.c
-	$(ARMCC) -c $(CFLAGS) $(ARCH_FLAGS) MISC_TESTS/test.c -o MISC_TESTS/test.o
+MISC_TESTS/test4.o: MISC_TESTS/test4.c
+	$(ARMCC) -c $(CFLAGS) $(ARCH_FLAGS) MISC_TESTS/test4.c -o MISC_TESTS/test4.o
+
+MISC_TESTS/test5.o: MISC_TESTS/test5.c
+	$(ARMCC) -c $(CFLAGS) $(ARCH_FLAGS) MISC_TESTS/test5.c -o MISC_TESTS/test5.o
+
+MISC_TESTS/test6.o: MISC_TESTS/test6.c
+	$(ARMCC) -c $(CFLAGS) $(ARCH_FLAGS) MISC_TESTS/test6.c -o MISC_TESTS/test6.o
+
+MISC_TESTS/test7.o: MISC_TESTS/test7.c
+	$(ARMCC) -c $(CFLAGS) $(ARCH_FLAGS) MISC_TESTS/test7.c -o MISC_TESTS/test7.o
+
 
 
 lib377: $(OBJECTS_377)
@@ -223,12 +239,30 @@ sike751/arith_tests-p751.bin: objs751/arith_tests-p751.elf
 objs751/arith_tests-p751.elf: objs751/arith_tests-p751.o objs/test_extras.o $(LDSCRIPT) lib751/libsidh.a 
 	$(ARMCC) -o objs751/arith_tests-p751.elf objs751/arith_tests-p751.o objs/test_extras.o lib751/libsidh.a $(LDFLAGS) src/libopencm3/lib/libopencm3_stm32f4.a
 
-MISC_TESTS/test.bin: MISC_TESTS/test.elf
-	$(PREFIX)-objcopy -Obinary MISC_TESTS/test.elf MISC_TESTS/test.bin
+MISC_TESTS/test4.bin: MISC_TESTS/test4.elf
+	$(PREFIX)-objcopy -Obinary MISC_TESTS/test4.elf MISC_TESTS/test4.bin
 
-MISC_TESTS/test.elf: MISC_TESTS/test.o objs/test_extras.o $(LDSCRIPT) lib434/libsidh.a 
-	$(ARMCC) -o MISC_TESTS/test.elf MISC_TESTS/test.o objs/test_extras.o lib434/libsidh.a $(LDFLAGS) src/libopencm3/lib/libopencm3_stm32f4.a
+MISC_TESTS/test5.bin: MISC_TESTS/test5.elf
+	$(PREFIX)-objcopy -Obinary MISC_TESTS/test5.elf MISC_TESTS/test5.bin
 
+MISC_TESTS/test4.elf: MISC_TESTS/test4.o objs/test_extras.o $(LDSCRIPT) lib434/libsidh.a 
+	$(ARMCC) -o MISC_TESTS/test4.elf MISC_TESTS/test4.o objs/test_extras.o lib434/libsidh.a $(LDFLAGS) src/libopencm3/lib/libopencm3_stm32f4.a
+
+MISC_TESTS/test5.elf: MISC_TESTS/test5.o objs/test_extras.o $(LDSCRIPT) lib503/libsidh.a 
+	$(ARMCC) -o MISC_TESTS/test5.elf MISC_TESTS/test5.o objs/test_extras.o lib503/libsidh.a $(LDFLAGS) src/libopencm3/lib/libopencm3_stm32f4.a
+
+
+MISC_TESTS/test6.bin: MISC_TESTS/test6.elf
+	$(PREFIX)-objcopy -Obinary MISC_TESTS/test6.elf MISC_TESTS/test6.bin
+
+MISC_TESTS/test7.bin: MISC_TESTS/test7.elf
+	$(PREFIX)-objcopy -Obinary MISC_TESTS/test7.elf MISC_TESTS/test7.bin
+
+MISC_TESTS/test6.elf: MISC_TESTS/test6.o objs/test_extras.o $(LDSCRIPT) lib610/libsidh.a 
+	$(ARMCC) -o MISC_TESTS/test6.elf MISC_TESTS/test6.o objs/test_extras.o lib610/libsidh.a $(LDFLAGS) src/libopencm3/lib/libopencm3_stm32f4.a
+
+MISC_TESTS/test7.elf: MISC_TESTS/test7.o objs/test_extras.o $(LDSCRIPT) lib751/libsidh.a 
+	$(ARMCC) -o MISC_TESTS/test7.elf MISC_TESTS/test7.o objs/test_extras.o lib751/libsidh.a $(LDFLAGS) src/libopencm3/lib/libopencm3_stm32f4.a
 
 #$(CC) $(CFLAGS) -L./lib434comp tests/test_SIDHp434_compressed.c tests/test_extras.c -lsidh $(LDFLAGS) -o sidh434_compressed/test_SIDH $(ARM_SETTING)
 

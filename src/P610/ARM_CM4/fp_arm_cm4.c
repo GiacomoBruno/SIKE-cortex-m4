@@ -49,6 +49,8 @@ __inline void fpadd610(const digit_t* a, const digit_t* b, digit_t* c)
 { // Modular addition, c = a+b mod p610.
   // Inputs: a, b in [0, 2*p610-1] 
   // Output: c in [0, 2*p610-1] 
+  fpadd610_asm(a,b,c);
+  /*
     unsigned int i, carry = 0;
     digit_t mask;
 
@@ -65,7 +67,7 @@ __inline void fpadd610(const digit_t* a, const digit_t* b, digit_t* c)
     carry = 0;
     for (i = 0; i < NWORDS_FIELD; i++) {
         ADDC(carry, c[i], ((digit_t*)p610x2)[i] & mask, carry, c[i]); 
-    }
+    }*/
 } 
 
 
@@ -73,7 +75,8 @@ __inline void fpsub610(const digit_t* a, const digit_t* b, digit_t* c)
 { // Modular subtraction, c = a-b mod p610.
   // Inputs: a, b in [0, 2*p610-1] 
   // Output: c in [0, 2*p610-1] 
-    unsigned int i, borrow = 0;
+    fpsub610_asm(a,b,c);
+    /*unsigned int i, borrow = 0;
     digit_t mask;
 
     for (i = 0; i < NWORDS_FIELD; i++) {
@@ -84,7 +87,7 @@ __inline void fpsub610(const digit_t* a, const digit_t* b, digit_t* c)
     borrow = 0;
     for (i = 0; i < NWORDS_FIELD; i++) {
         ADDC(borrow, c[i], ((digit_t*)p610x2)[i] & mask, borrow, c[i]); 
-    }
+    }*/
 }
 
 
@@ -134,6 +137,8 @@ void fpcorrection610(digit_t* a)
 
 void digit_x_digit(const digit_t a, const digit_t b, digit_t* c)
 { // Digit multiplication, digit * digit -> 2-digit result    
+    return dxd_asm(a,b,c);
+    
     register digit_t al, ah, bl, bh, temp;
     digit_t albl, albh, ahbl, ahbh, res1, res2, res3, carry;
     digit_t mask_low = (digit_t)(-1) >> (sizeof(digit_t)*4), mask_high = (digit_t)(-1) << (sizeof(digit_t)*4);
@@ -163,6 +168,11 @@ void digit_x_digit(const digit_t a, const digit_t b, digit_t* c)
     c[1] = temp & mask_low;                   // C10 
     carry = temp & mask_high; 
     c[1] ^= (ahbh & mask_high) + carry;       // C11
+}
+
+void mp_mul_asm(const digit_t* a, const digit_t* b, digit_t* c, const unsigned int nwords)
+{
+    fpmul610_asm(a,b,c);
 }
 
 

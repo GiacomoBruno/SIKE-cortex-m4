@@ -49,6 +49,11 @@ __inline void fpadd503(const digit_t* a, const digit_t* b, digit_t* c)
 { // Modular addition, c = a+b mod p503.
   // Inputs: a, b in [0, 2*p503-1] 
   // Output: c in [0, 2*p503-1] 
+
+  fpadd503_asm(a,b,c);
+  return;
+
+
     unsigned int i, carry = 0;
     digit_t mask;
 
@@ -73,6 +78,8 @@ __inline void fpsub503(const digit_t* a, const digit_t* b, digit_t* c)
 { // Modular subtraction, c = a-b mod p503.
   // Inputs: a, b in [0, 2*p503-1] 
   // Output: c in [0, 2*p503-1] 
+  fpsub503_asm(a,b,c);
+  return;
     unsigned int i, borrow = 0;
     digit_t mask;
 
@@ -132,30 +139,34 @@ void fpcorrection503(digit_t* a)
 }
 
 
-void digit_x_digit(const digit_t a, const digit_t b, digit_t* c)
+__inline void digit_x_digit(const digit_t a, const digit_t b, digit_t* c)
 { // Digit multiplication, digit * digit -> 2-digit result    
+
+    //return dxd_asm(a,b,c);
+
+
     register digit_t al, ah, bl, bh, temp;
     digit_t albl, albh, ahbl, ahbh, res1, res2, res3, carry;
     digit_t mask_low = (digit_t)(-1) >> (sizeof(digit_t)*4), mask_high = (digit_t)(-1) << (sizeof(digit_t)*4);
-
+///
     al = a & mask_low;                        // Low part
     ah = a >> (sizeof(digit_t) * 4);          // High part
     bl = b & mask_low;
     bh = b >> (sizeof(digit_t) * 4);
-
+///
     albl = al*bl;
     albh = al*bh;
     ahbl = ah*bl;
     ahbh = ah*bh;
     c[0] = albl & mask_low;                   // C00
-
+///
     res1 = albl >> (sizeof(digit_t) * 4);
     res2 = ahbl & mask_low;
     res3 = albh & mask_low;  
     temp = res1 + res2 + res3;
     carry = temp >> (sizeof(digit_t) * 4);
     c[0] ^= temp << (sizeof(digit_t) * 4);    // C01   
-
+///
     res1 = ahbl >> (sizeof(digit_t) * 4);
     res2 = albh >> (sizeof(digit_t) * 4);
     res3 = ahbh & mask_low;
@@ -165,6 +176,10 @@ void digit_x_digit(const digit_t a, const digit_t b, digit_t* c)
     c[1] ^= (ahbh & mask_high) + carry;       // C11
 }
 
+void mp_mul_asm(const digit_t* a, const digit_t* b, digit_t* c, const unsigned int nwords)
+{
+    fpmul503_asm(a,b,c);
+}
 
 void mp_mul(const digit_t* a, const digit_t* b, digit_t* c, const unsigned int nwords)
 { // Multiprecision comba multiply, c = a*b, where lng(a) = lng(b) = nwords.   

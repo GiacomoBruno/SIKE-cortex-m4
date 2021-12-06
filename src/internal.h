@@ -44,19 +44,7 @@ void digit_x_digit(const digit_t a, const digit_t b, digit_t* c);
 // Multiprecision comba multiply, c = a*b, where lng(a) = lng(b) = nwords.
 void mp_mul(const digit_t* a, const digit_t* b, digit_t* c, const unsigned int nwords);
 
-
-void mp_mul_986_asm(const digit_t* a, const digit_t* b, digit_t* c); 
-void mp_mul_986(const digit_t* a, const digit_t* b, digit_t* c);
-void mp_mul_512_asm(const digit_t* a, const digit_t* b, digit_t* c); 
-void mp_mul_512(const digit_t* a, const digit_t* b, digit_t* c);
-void mp_mul_256(const digit_t* a, const digit_t* b, digit_t* c);
-void mp_mul_256_asm(const digit_t* a, const digit_t* b, digit_t* c); 
-void mp_mul_192(const digit_t* a, const digit_t* b, digit_t* c);
-void mp_mul_192_asm(const digit_t* a, const digit_t* b, digit_t* c); 
-void mp_mul_8x6pk_asm(const digit_t* a, const digit_t* b, const digit_t* num, digit_t* c);
-
-void mp_mul_8x6pk(const digit_t* a, const digit_t* b, const digit_t* num, digit_t* c);
-
+void mp_mul_asm(const digit_t* a, const digit_t* b, digit_t* c, const unsigned int nwords);
 
 
 /************ Montgomery reduction and conversion functions *************/
